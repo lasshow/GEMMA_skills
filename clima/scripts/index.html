@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Clima</title></head>
+<body>
+<script>
+  /**
+   * Consulta el clima via wttr.in (API publica, sin API key, CORS habilitado).
+   */
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const city = jsonData.city || 'Madrid';
+      const lang = jsonData.lang || 'es';
+
+      // wttr.in soporta formato JSON y CORS nativo
+      const url = `https://wttr.in/${encodeURIComponent(city)}?format=j1&lang=${lang}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const w = await res.json();
+
+      const current = w.current_condition?.[0] || {};
+      const area = w.nearest_area?.[0] || {};
+      const forecast = w.weather || [];
+
+      let result = `=== CLIMA EN ${(area.areaName?.[0]?.value || city).toUpperCase()} ===\n\n`;
+      result += `Temperatura: ${current.temp_C}°C (sensacion: ${current.FeelsLikeC}°C)\n`;
+      result += `Condicion: ${current.lang_es?.[0]?.value || current.weatherDesc?.[0]?.value || 'N/A'}\n`;
+      result += `Humedad: ${current.humidity}%\n`;
+      result += `Viento: ${current.windspeedKmph} km/h (${current.winddir16Point})\n`;
+      result += `Visibilidad: ${current.visibility} km\n`;
+      result += `Presion: ${current.pressure} hPa\n`;
+
+      if (forecast.length > 0) {
+        result += `\n=== PRONOSTICO ===\n`;
+        for (const day of forecast.slice(0, 3)) {
+          const desc = day.hourly?.[4]?.lang_es?.[0]?.value || day.hourly?.[4]?.weatherDesc?.[0]?.value || '';
+          result += `${day.date}: ${day.mintempC}°C - ${day.maxtempC}°C, ${desc}\n`;
+        }
+      }
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error al consultar el clima: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

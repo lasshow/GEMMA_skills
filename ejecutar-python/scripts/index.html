@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Ejecutar Python</title></head>
+<body>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script>
+<script>
+  let pyodide = null;
+
+  async function loadPyodide() {
+    if (!pyodide) {
+      pyodide = await self.loadPyodide();
+    }
+    return pyodide;
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const code = jsonData.code || '';
+
+      if (!code.trim()) {
+        return JSON.stringify({ error: 'No se proporciono codigo Python.' });
+      }
+
+      const py = await loadPyodide();
+
+      // Capturar stdout
+      py.runPython(`
+import sys
+from io import StringIO
+_captured_output = StringIO()
+sys.stdout = _captured_output
+sys.stderr = _captured_output
+`);
+
+      // Ejecutar el codigo del usuario
+      let execResult;
+      try {
+        execResult = py.runPython(code);
+      } catch (pyErr) {
+        // Restaurar stdout
+        py.runPython('sys.stdout = sys.__stdout__; sys.stderr = sys.__stderr__');
+        return JSON.stringify({ error: `Error Python: ${pyErr.message}` });
+      }
+
+      // Obtener la salida capturada
+      const output = py.runPython('_captured_output.getvalue()');
+      py.runPython('sys.stdout = sys.__stdout__; sys.stderr = sys.__stderr__');
+
+      let result = '';
+      if (output && output.trim()) {
+        result = `=== SALIDA ===\n${output}`;
+      } else if (execResult !== undefined && execResult !== null) {
+        result = `=== RESULTADO ===\n${String(execResult)}`;
+      } else {
+        result = 'Codigo ejecutado sin salida. Usa print() para ver resultados.';
+      }
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

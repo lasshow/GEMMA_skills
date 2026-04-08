@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Consultar IP</title></head>
+<body>
+<script>
+  /**
+   * Consulta IP publica via ipapi.co (CORS nativo, sin API key).
+   */
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+
+      let result = `=== TU IP PUBLICA ===\n\n`;
+      result += `IP: ${d.ip}\n`;
+      result += `Ciudad: ${d.city}\n`;
+      result += `Region: ${d.region}\n`;
+      result += `Pais: ${d.country_name}\n`;
+      result += `Codigo postal: ${d.postal}\n`;
+      result += `ISP: ${d.org}\n`;
+      result += `Zona horaria: ${d.timezone}\n`;
+      if (d.latitude && d.longitude) {
+        result += `Coordenadas: ${d.latitude}, ${d.longitude}\n`;
+      }
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

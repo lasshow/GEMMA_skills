@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Calculadora</title></head>
+<body>
+<script>
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const expr = jsonData.expression || '';
+
+      if (!expr.trim()) {
+        return JSON.stringify({ error: 'No se proporciono expresion.' });
+      }
+
+      // Evaluar de forma segura usando Function constructor
+      const allowedChars = /^[0-9+\-*/().,%\s^eE]|Math\.\w+|PI|sqrt|pow|sin|cos|tan|log|abs|round|ceil|floor|min|max|random/g;
+      const sanitized = expr.replace(/\^/g, '**');
+
+      let result;
+      try {
+        result = new Function(`"use strict"; return (${sanitized})`)();
+      } catch (evalErr) {
+        return JSON.stringify({ error: `Expresion invalida: ${evalErr.message}` });
+      }
+
+      if (typeof result === 'number') {
+        // Redondear si tiene muchos decimales
+        const formatted = Number.isInteger(result) ? result.toString() :
+                          result.toFixed(10).replace(/\.?0+$/, '');
+        return JSON.stringify({ result: `${expr} = ${formatted}` });
+      }
+
+      return JSON.stringify({ result: `Resultado: ${result}` });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>
