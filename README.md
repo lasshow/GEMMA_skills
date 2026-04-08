@@ -1,84 +1,95 @@
 # GEMMA Skills - Google AI Edge Gallery
 
-Skills personalizados en español para **Google AI Edge Gallery** con modelos Gemma 4 (E2B/E4B) on-device.
+Skills personalizados en espanol para **Google AI Edge Gallery** con modelos Gemma 4 (E2B/E4B) on-device.
 
-## Instalacion rapida (via URL)
+## Instalacion rapida
 
 En AI Edge Gallery → Agent Skills → (+) → **Load skill from URL** → pega la URL:
 
-| Skill | URL | API Key |
-|-------|-----|---------|
-| buscar-web | `https://lasshow.github.io/GEMMA_skills/buscar-web` | No |
-| noticias | `https://lasshow.github.io/GEMMA_skills/noticias` | No |
-| clima | `https://lasshow.github.io/GEMMA_skills/clima` | No |
-| navegar-web | `https://lasshow.github.io/GEMMA_skills/navegar-web` | No |
-| resumir-pagina | `https://lasshow.github.io/GEMMA_skills/resumir-pagina` | No |
-| calculadora | `https://lasshow.github.io/GEMMA_skills/calculadora` | No |
-| ejecutar-python | `https://lasshow.github.io/GEMMA_skills/ejecutar-python` | No |
-| consultar-ip | `https://lasshow.github.io/GEMMA_skills/consultar-ip` | No |
-| traductor | `https://lasshow.github.io/GEMMA_skills/traductor` | No |
-| enviar-correo | `https://lasshow.github.io/GEMMA_skills/enviar-correo` | No |
-| enviar-sms | `https://lasshow.github.io/GEMMA_skills/enviar-sms` | No |
+> **IMPORTANTE:** Activa maximo 3-4 skills a la vez para evitar errores de memoria.
 
-## Skills incluidos
+### Internet y Busqueda
+| Skill | URL | Tipo |
+|-------|-----|------|
+| buscar-web | `https://lasshow.github.io/GEMMA_skills/buscar-web` | JS |
+| noticias | `https://lasshow.github.io/GEMMA_skills/noticias` | JS |
+| navegar-web | `https://lasshow.github.io/GEMMA_skills/navegar-web` | JS |
+| resumir-pagina | `https://lasshow.github.io/GEMMA_skills/resumir-pagina` | JS |
 
-### Busqueda e Internet
-| Skill | Tipo | Descripcion |
-|-------|------|-------------|
-| **buscar-web** | JS | Busca en DuckDuckGo + Wikipedia + DuckDuckGo HTML (via corsproxy.io) |
-| **noticias** | JS | Titulares de Google News RSS via rss2json.com |
-| **navegar-web** | JS | Lee contenido de cualquier pagina web via proxy CORS |
-| **resumir-pagina** | JS | Extrae y resume texto de cualquier URL |
+### Comunicacion (via deep links + intents)
+| Skill | URL | Tipo |
+|-------|-----|------|
+| enviar-whatsapp | `https://lasshow.github.io/GEMMA_skills/enviar-whatsapp` | Text |
+| enviar-correo | `https://lasshow.github.io/GEMMA_skills/enviar-correo` | Native |
+| enviar-sms | `https://lasshow.github.io/GEMMA_skills/enviar-sms` | Native |
+| llamar-telefono | `https://lasshow.github.io/GEMMA_skills/llamar-telefono` | Text |
+| abrir-enlace | `https://lasshow.github.io/GEMMA_skills/abrir-enlace` | Text |
 
 ### Utilidades
-| Skill | Tipo | Descripcion |
-|-------|------|-------------|
-| **clima** | JS | Clima actual y pronostico via wttr.in (sin API key) |
-| **calculadora** | JS | Calcula expresiones matematicas con precision |
-| **ejecutar-python** | JS | Ejecuta codigo Python en el telefono via Pyodide (WebAssembly) |
-| **consultar-ip** | JS | Muestra tu IP publica y ubicacion |
-| **traductor** | Text-Only | Traductor multilingue (usa las capacidades del modelo) |
+| Skill | URL | Tipo |
+|-------|-----|------|
+| clima | `https://lasshow.github.io/GEMMA_skills/clima` | JS |
+| calculadora | `https://lasshow.github.io/GEMMA_skills/calculadora` | JS |
+| conversor-unidades | `https://lasshow.github.io/GEMMA_skills/conversor-unidades` | Text |
+| generador-contrasenas | `https://lasshow.github.io/GEMMA_skills/generador-contrasenas` | JS |
+| ejecutar-python | `https://lasshow.github.io/GEMMA_skills/ejecutar-python` | JS |
+| consultar-ip | `https://lasshow.github.io/GEMMA_skills/consultar-ip` | JS |
+| temporizador | `https://lasshow.github.io/GEMMA_skills/temporizador` | JS |
 
-### Comunicacion
-| Skill | Tipo | Descripcion |
-|-------|------|-------------|
-| **enviar-correo** | Native | Redacta y envia emails via Gmail |
-| **enviar-sms** | Native | Envia mensajes SMS |
+### Productividad
+| Skill | URL | Tipo |
+|-------|-----|------|
+| notas-rapidas | `https://lasshow.github.io/GEMMA_skills/notas-rapidas` | JS |
+| segundo-cerebro | `https://lasshow.github.io/GEMMA_skills/segundo-cerebro` | Text |
+| traductor | `https://lasshow.github.io/GEMMA_skills/traductor` | Text |
 
-## IMPORTANTE: Maximo 3-4 skills activos
+**Total: 19 skills** - Todos en espanol, sin API key.
 
-Los modelos E2B/E4B tienen contexto limitado. Activa solo los skills que necesites en cada momento.
+## Tipos de skills
 
-**Configuracion recomendada para uso diario:**
-- buscar-web + clima + enviar-correo (3 skills)
+- **JS**: Ejecuta JavaScript en WebView oculto (fetch APIs, calculos, etc.)
+- **Text**: Solo instrucciones para el modelo (no requiere JS)
+- **Native**: Usa intents nativos de Android (email, SMS)
 
-## Mobile Actions (control del telefono)
+## Truco de deep links
 
-Ademas de los Agent Skills, Edge Gallery soporta **Mobile Actions** con el modelo FunctionGemma 270M (276 MB):
+Los skills de comunicacion (WhatsApp, llamar, abrir enlace) usan un truco descubierto: Edge Gallery renderiza **links Markdown clickeables** que al tocarlos abren la app correspondiente:
+- `[Enviar WhatsApp](https://wa.me/34666123456?text=Hola)` → abre WhatsApp
+- `[Llamar](tel:+34666123456)` → abre marcador
+- `[Abrir Maps](https://maps.google.com/?q=Bilbao)` → abre Google Maps
 
-| Accion | Comando de ejemplo |
-|--------|-------------------|
-| Linterna ON/OFF | "Enciende la linterna" |
-| Crear contacto | "Crea un contacto Juan Garcia 666123456" |
-| Enviar email | "Envia email a test@mail.com" |
-| Abrir mapa | "Muestra Bilbao en el mapa" |
-| WiFi settings | "Abre configuracion WiFi" |
-| Evento calendario | "Crea evento manana a las 15:00 reunion" |
+## Configuraciones recomendadas
 
-Para usarlo: descarga MobileActions-270M desde la app (seccion Mobile Actions).
+**Asistente diario (3 skills):**
+buscar-web + enviar-whatsapp + clima
 
-## Skills de la comunidad recomendados (sin API key)
+**Productividad (3 skills):**
+notas-rapidas + calculadora + traductor
 
-| Skill | URL para cargar | Autor |
-|-------|----------------|-------|
-| DuckDuckGo | `https://wafwoof.github.io/edge-gallery-duckduckgo/` | @wafwoof |
-| Google News | `https://wafwoof.github.io/edge-gallery-googlenews/` | @wafwoof |
+**Comunicacion completa (4 skills):**
+enviar-whatsapp + enviar-correo + llamar-telefono + abrir-enlace
 
-Mas skills en: [GitHub Discussions - Skills](https://github.com/google-ai-edge/gallery/discussions/categories/skills)
+## Mobile Actions (FunctionGemma 270M)
+
+Ademas de los Agent Skills, descarga **MobileActions-270M** (276 MB) para:
+- Encender/apagar linterna
+- Crear contactos
+- Abrir Google Maps
+- Crear eventos en calendario
+- Abrir configuracion WiFi
 
 ## Notas tecnicas
 
-- Skills JS usan APIs con CORS nativo (DuckDuckGo, Wikipedia, wttr.in, ipapi.co, rss2json)
-- Para leer paginas arbitrarias se usa corsproxy.io como proxy CORS
-- GitHub Pages sirve los archivos con MIME types correctos (.nojekyll incluido)
-- Skills nativos usan `run_intent` (solo send_email y send_sms soportados)
+- APIs con CORS nativo: DuckDuckGo, Wikipedia, wttr.in, ipapi.co, rss2json.com
+- Proxy CORS: corsproxy.io (para paginas arbitrarias)
+- Deep links: wa.me, tel:, mailto:, maps.google.com (via Markdown clickeable)
+- Almacenamiento local: localStorage para notas-rapidas
+- Python: Pyodide (WebAssembly) para ejecutar-python
+- Crypto: Web Crypto API para generador-contrasenas
+
+## Links utiles
+
+- [Google AI Edge Gallery - GitHub](https://github.com/google-ai-edge/gallery)
+- [Skills de la comunidad](https://github.com/google-ai-edge/gallery/discussions/categories/skills)
+- [DuckDuckGo skill (wafwoof)](https://wafwoof.github.io/edge-gallery-duckduckgo/)
+- [Google News skill (wafwoof)](https://wafwoof.github.io/edge-gallery-googlenews/)

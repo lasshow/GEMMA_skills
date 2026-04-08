@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Notas Rapidas</title></head>
+<body>
+<script>
+  const STORAGE_KEY = 'gemma_notas_rapidas';
+
+  function getNotes() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    } catch { return []; }
+  }
+
+  function saveNotes(notes) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const action = jsonData.action || 'list';
+      let notes = getNotes();
+
+      if (action === 'add') {
+        const text = jsonData.text || '';
+        if (!text.trim()) return JSON.stringify({ error: 'No se proporciono texto para la nota.' });
+        const note = {
+          text: text.trim(),
+          date: new Date().toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
+        };
+        notes.unshift(note);
+        saveNotes(notes);
+        return JSON.stringify({ result: `Nota guardada: "${text.trim()}"\nTotal de notas: ${notes.length}` });
+      }
+
+      if (action === 'list') {
+        if (notes.length === 0) {
+          return JSON.stringify({ result: 'No hay notas guardadas.' });
+        }
+        let result = `=== MIS NOTAS (${notes.length}) ===\n\n`;
+        notes.forEach((n, i) => {
+          result += `[${i + 1}] ${n.text}\n    Guardada: ${n.date}\n\n`;
+        });
+        return JSON.stringify({ result });
+      }
+
+      if (action === 'delete') {
+        const id = parseInt(jsonData.id);
+        if (isNaN(id) || id < 0 || id >= notes.length) {
+          return JSON.stringify({ error: `Indice invalido. Hay ${notes.length} notas (0 a ${notes.length - 1}).` });
+        }
+        const deleted = notes.splice(id, 1)[0];
+        saveNotes(notes);
+        return JSON.stringify({ result: `Nota borrada: "${deleted.text}"\nNotas restantes: ${notes.length}` });
+      }
+
+      if (action === 'clear') {
+        const count = notes.length;
+        saveNotes([]);
+        return JSON.stringify({ result: `${count} notas borradas. Lista vacia.` });
+      }
+
+      return JSON.stringify({ error: `Accion desconocida: ${action}` });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

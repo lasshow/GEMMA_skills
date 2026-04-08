@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Generador Contrasenas</title></head>
+<body>
+<script>
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const length = Math.min(Math.max(jsonData.length || 16, 4), 128);
+      const type = jsonData.type || 'full';
+      const count = Math.min(Math.max(jsonData.count || 3, 1), 10);
+
+      const charsets = {
+        full: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?',
+        alpha: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        pin: '0123456789'
+      };
+
+      const charset = charsets[type] || charsets.full;
+      const passwords = [];
+
+      for (let i = 0; i < count; i++) {
+        let pw = '';
+        const array = new Uint32Array(length);
+        crypto.getRandomValues(array);
+        for (let j = 0; j < length; j++) {
+          pw += charset[array[j] % charset.length];
+        }
+        passwords.push(pw);
+      }
+
+      // Calcular entropia
+      const entropy = Math.floor(length * Math.log2(charset.length));
+      let strength = 'Debil';
+      if (entropy >= 128) strength = 'Muy fuerte';
+      else if (entropy >= 80) strength = 'Fuerte';
+      else if (entropy >= 60) strength = 'Moderada';
+      else if (entropy >= 40) strength = 'Aceptable';
+
+      let result = `=== CONTRASENAS GENERADAS ===\n`;
+      result += `Longitud: ${length} | Tipo: ${type} | Entropia: ${entropy} bits\n`;
+      result += `Fortaleza: ${strength}\n\n`;
+      passwords.forEach((pw, i) => {
+        result += `[${i + 1}] ${pw}\n`;
+      });
+      result += `\nRecuerda guardarlas en un gestor de contrasenas seguro.`;
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

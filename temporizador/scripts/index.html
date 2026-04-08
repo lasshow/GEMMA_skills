@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Temporizador</title></head>
+<body>
+<script>
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const minutes = jsonData.minutes || 0;
+      const seconds = jsonData.seconds || 0;
+      const label = jsonData.label || 'Temporizador';
+      const totalSeconds = (minutes * 60) + seconds;
+
+      if (totalSeconds <= 0) {
+        return JSON.stringify({ error: 'Indica un tiempo mayor a 0.' });
+      }
+
+      if (totalSeconds > 7200) {
+        return JSON.stringify({ error: 'Maximo 2 horas (120 minutos).' });
+      }
+
+      // Esperar el tiempo indicado
+      await new Promise(resolve => setTimeout(resolve, totalSeconds * 1000));
+
+      // Intentar reproducir sonido de alarma
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        for (let i = 0; i < 3; i++) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.frequency.value = 800;
+          gain.gain.value = 0.3;
+          osc.start(audioCtx.currentTime + i * 0.4);
+          osc.stop(audioCtx.currentTime + i * 0.4 + 0.2);
+        }
+      } catch(e) { /* audio no disponible */ }
+
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+      return JSON.stringify({
+        result: `TIEMPO! "${label}" ha terminado despues de ${timeStr}.`
+      });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>
