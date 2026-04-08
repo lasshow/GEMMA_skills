@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Buscar Web</title></head>
+<body>
+<script>
+  /**
+   * Busca en DuckDuckGo Instant Answer API.
+   * CORS nativo: Access-Control-Allow-Origin: *
+   */
+  async function searchDDG(query, lang) {
+    try {
+      const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1&kl=${lang}-${lang}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const d = await res.json();
+
+      let r = '';
+      if (d.AbstractText) { r += d.AbstractText + '\n'; if (d.AbstractURL) r += `Enlace: ${d.AbstractURL}\n`; }
+      if (d.Answer) r += d.Answer + '\n';
+      if (d.Definition) { r += d.Definition + '\n'; if (d.DefinitionURL) r += `Enlace: ${d.DefinitionURL}\n`; }
+      if (d.Infobox && d.Infobox.content) {
+        for (const i of d.Infobox.content.slice(0, 6)) r += `  ${i.label}: ${i.value}\n`;
+      }
+      let c = 0;
+      if (d.RelatedTopics) {
+        for (const t of d.RelatedTopics) {
+          if (c >= 4) break;
+          if (t.Text && t.FirstURL) { c++; r += `- ${t.Text}\n  ${t.FirstURL}\n`; }
+          if (t.Topics) for (const s of t.Topics) {
+            if (c >= 4) break;
+            if (s.Text && s.FirstURL) { c++; r += `- ${s.Text}\n  ${s.FirstURL}\n`; }
+          }
+        }
+      }
+      return r.trim() || null;
+    } catch(e) { return null; }
+  }
+
+  /**
+   * Busca en Wikipedia API.
+   * CORS nativo con parametro origin=*
+   */
+  async function searchWiki(query, lang) {
+    try {
+      const params = new URLSearchParams({
+        action:'query', format:'json', generator:'search',
+        gsrsearch:query, gsrlimit:'2', prop:'extracts',
+        explaintext:'1', exintro:'1', origin:'*'
+      });
+      const res = await fetch(`https://${lang}.wikipedia.org/w/api.php?${params}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.query || !data.query.pages) return null;
+
+      let r = '';
+      const pages = Object.values(data.query.pages)
+        .filter(p => p.extract && p.extract.length > 50)
+        .sort((a,b) => a.index - b.index).slice(0,2);
+      for (const p of pages) {
+        let ext = p.extract;
+        if (ext.length > 1200) { ext = ext.substring(0,1200); const d=ext.lastIndexOf('.'); if(d>800) ext=ext.substring(0,d+1); ext+=' [...]'; }
+        r += `${p.title}\n${ext}\nhttps://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g,'_'))}\n\n`;
+      }
+      return r.trim() || null;
+    } catch(e) { return null; }
+  }
+
+  /**
+   * Busca resultados web via DuckDuckGo HTML + corsproxy.io
+   * corsproxy.io verificado con CORS: Access-Control-Allow-Origin: *
+   */
+  async function searchDDGWeb(query, lang) {
+    try {
+      const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=${lang}-${lang}`;
+      const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(ddgUrl)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) return [];
+
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const results = [];
+
+      for (const node of doc.querySelectorAll('.result')) {
+        if (results.length >= 5) break;
+        const titleEl = node.querySelector('.result__a');
+        const snippetEl = node.querySelector('.result__snippet');
+        if (!titleEl) continue;
+        const title = titleEl.textContent.trim();
+        let link = titleEl.getAttribute('href') || '';
+        const snippet = snippetEl ? snippetEl.textContent.trim() : '';
+        if (link.includes('uddg=')) {
+          try { link = decodeURIComponent(new URL(link,'https://duckduckgo.com').searchParams.get('uddg') || link); } catch(e) {}
+        }
+        if (title.length > 2) results.push({title, link, snippet});
+      }
+      return results;
+    } catch(e) { return []; }
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const query = jsonData.query;
+      const lang = jsonData.lang || 'es';
+      let output = '';
+
+      const [ddgApi, wiki, ddgWeb] = await Promise.all([
+        searchDDG(query, lang),
+        searchWiki(query, lang),
+        searchDDGWeb(query, lang)
+      ]);
+
+      if (ddgApi) output += `=== RESPUESTA RAPIDA ===\n${ddgApi}\n\n`;
+      if (ddgWeb.length > 0) {
+        output += `=== RESULTADOS WEB ===\n`;
+        ddgWeb.forEach((r, i) => {
+          output += `[${i+1}] ${r.title}\n`;
+          if (r.snippet) output += `    ${r.snippet}\n`;
+          if (r.link) output += `    ${r.link}\n`;
+          output += '\n';
+        });
+      }
+      if (wiki) output += `=== WIKIPEDIA ===\n${wiki}\n`;
+
+      if (!output.trim()) {
+        output = `No se encontraron resultados para "${query}".\nIntenta con otros terminos o busca directamente en tu navegador.`;
+      }
+      if (output.length > 5000) output = output.substring(0, 5000) + '\n[TRUNCADO]';
+      return JSON.stringify({ result: output });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

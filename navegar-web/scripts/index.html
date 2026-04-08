@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Navegar Web</title></head>
+<body>
+<script>
+  /**
+   * Fetch con proxy CORS (corsproxy.io - verificado funcional).
+   * Intenta directo primero, luego proxy.
+   */
+  async function fetchPage(url) {
+    // Intento directo (funciona para APIs con CORS nativo)
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.text();
+    } catch(e) {}
+
+    // Proxy CORS (corsproxy.io confirmado funcional por la comunidad)
+    try {
+      const res = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`);
+      if (res.ok) return await res.text();
+    } catch(e) {}
+
+    // Fallback: corsfix.com
+    try {
+      const res = await fetch(`https://proxy.corsfix.com/?${encodeURIComponent(url)}`);
+      if (res.ok) return await res.text();
+    } catch(e) {}
+
+    throw new Error('No se pudo acceder a esta pagina');
+  }
+
+  function extractText(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    ['script','style','nav','footer','header','aside','noscript','svg','iframe','form']
+      .forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
+
+    let main = null;
+    for (const sel of ['article','main','[role="main"]','.post-content','.article-body','.entry-content','.content','#content']) {
+      main = doc.querySelector(sel);
+      if (main) break;
+    }
+
+    const title = doc.querySelector('title')?.textContent?.trim() ||
+                  doc.querySelector('h1')?.textContent?.trim() || '';
+    const metaDesc = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+    const el = main || doc.body;
+    let text = '';
+
+    el.querySelectorAll('p, h1, h2, h3, h4, li, blockquote, pre').forEach(n => {
+      const t = n.textContent.replace(/\s+/g, ' ').trim();
+      if (t.length > 15) {
+        const tag = n.tagName.toLowerCase();
+        if (tag.startsWith('h')) text += `\n## ${t}\n`;
+        else if (tag === 'li') text += `- ${t}\n`;
+        else text += t + '\n\n';
+      }
+    });
+    if (!text.trim()) text = el.textContent.replace(/\s+/g, ' ').trim();
+    return { title, metaDesc, text };
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      let url = jsonData.url || '';
+      if (!url) return JSON.stringify({ error: 'No se proporciono URL.' });
+      if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+
+      let html;
+      try {
+        html = await fetchPage(url);
+      } catch(e) {
+        return JSON.stringify({
+          result: `No se pudo acceder a ${url}.\n\nEsta pagina puede requerir login o bloquear accesos externos.\nAbre tu navegador y visita: ${url}`
+        });
+      }
+
+      const { title, metaDesc, text } = extractText(html);
+      let result = '';
+      if (title) result += `Titulo: ${title}\n\n`;
+      if (metaDesc) result += `Descripcion: ${metaDesc}\n\n`;
+      result += text.trim() || 'No se pudo extraer texto legible.';
+      if (result.length > 5000) result = result.substring(0, 5000) + '\n\n[CONTENIDO TRUNCADO]';
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>
