@@ -1,6 +1,33 @@
-# GEMMA Skills - Google AI Edge Gallery
+# GEMMA Skills + GemmaBot Agent
 
-Skills personalizados en espanol para **Google AI Edge Gallery** con modelos Gemma 4 (E2B/E4B) on-device.
+Skills personalizados en espanol para **Google AI Edge Gallery** con modelos Gemma 4 (E2B/E4B) on-device + **GemmaBot**: agente IA local controlable via Telegram/WhatsApp que puede controlar tu telefono.
+
+## Dos proyectos, un repositorio
+
+| Parte | Descripcion | Interfaz |
+|-------|-------------|----------|
+| **A) AI Edge Gallery Skills** | 19 skills JS/Text/Native para Edge Gallery | Chat en Edge Gallery app |
+| **B) [GemmaBot Agent](gemmabot/)** | Agente IA completo con control del telefono | Telegram / WhatsApp |
+
+---
+
+## Parte B: GemmaBot Agent (NUEVO)
+
+Agente personal con Gemma 4 que corre en Termux. Controlable via Telegram y/o WhatsApp. Puede: encender linterna, enviar SMS, abrir apps, buscar en internet, tomar notas, y mas. **Todo local y privado.**
+
+```bash
+# Instalacion rapida en Termux:
+git clone https://github.com/lasshow/GEMMA_skills.git
+cd GEMMA_skills/gemmabot
+bash scripts/install_termux.sh
+bash scripts/start.sh telegram
+```
+
+Ver documentacion completa: **[gemmabot/README.md](gemmabot/README.md)**
+
+---
+
+## Parte A: AI Edge Gallery Skills
 
 ## Instalacion rapida
 

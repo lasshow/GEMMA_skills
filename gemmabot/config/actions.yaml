@@ -1,0 +1,106 @@
+# Catalogo de acciones disponibles para GemmaBot
+# Cada accion se mapea a una tarea de Tasker o funcion interna
+
+actions:
+  # --- Control de hardware ---
+  linterna:
+    description: "Enciende o apaga la linterna del telefono"
+    params:
+      state: {type: "string", enum: ["on", "off"]}
+    requires: "termux-api"
+
+  wifi:
+    description: "Activa o desactiva WiFi"
+    params:
+      state: {type: "string", enum: ["on", "off"]}
+    requires: "termux-api"
+
+  bluetooth:
+    description: "Activa o desactiva Bluetooth"
+    params:
+      state: {type: "string", enum: ["on", "off"]}
+    requires: "tasker"
+
+  volumen:
+    description: "Ajusta el volumen del telefono"
+    params:
+      level: {type: "integer", min: 0, max: 15}
+      stream: {type: "string", enum: ["media", "ring", "alarm"]}
+    requires: "termux-api"
+
+  brillo:
+    description: "Ajusta el brillo de la pantalla"
+    params:
+      level: {type: "integer", min: 0, max: 255}
+    requires: "tasker"
+
+  # --- Comunicacion ---
+  enviar_sms:
+    description: "Envia un SMS"
+    params:
+      numero: {type: "string", required: true}
+      mensaje: {type: "string", required: true}
+    requires: "termux-api"
+
+  abrir_app:
+    description: "Abre una aplicacion por nombre de paquete"
+    params:
+      package: {type: "string", required: true}
+    requires: "tasker"
+
+  # --- Sistema ---
+  screenshot:
+    description: "Toma una captura de pantalla"
+    params: {}
+    requires: "tasker"
+
+  shell:
+    description: "Ejecuta un comando en la terminal"
+    params:
+      command: {type: "string", required: true}
+    requires: "termux"
+
+  notificacion:
+    description: "Muestra una notificacion en el telefono"
+    params:
+      titulo: {type: "string", required: true}
+      texto: {type: "string", required: true}
+    requires: "termux-api"
+
+  # --- Agenda ---
+  alarma:
+    description: "Configura una alarma"
+    params:
+      hora: {type: "string", format: "HH:MM"}
+      mensaje: {type: "string"}
+    requires: "tasker"
+
+  calendario:
+    description: "Crea un evento en el calendario"
+    params:
+      titulo: {type: "string", required: true}
+      fecha: {type: "string", format: "YYYY-MM-DD"}
+      hora: {type: "string", format: "HH:MM"}
+    requires: "tasker"
+
+  # --- IA interna (sin Tasker) ---
+  weather:
+    description: "Consulta el clima de una ciudad"
+    params:
+      city: {type: "string", required: true}
+    requires: "internet"
+
+  search:
+    description: "Busca informacion en internet"
+    params:
+      query: {type: "string", required: true}
+    requires: "internet"
+
+  notes:
+    description: "Gestiona notas locales"
+    params:
+      action: {type: "string", enum: ["add", "list", "delete", "search"]}
+      text: {type: "string"}
+      id: {type: "integer"}
+      query: {type: "string"}
+    requires: "sqlite"

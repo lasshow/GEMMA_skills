@@ -1,0 +1,14 @@
+# GemmaBot - Dependencias Python
+# Instalar: pip install -r requirements.txt
+
+# Cliente HTTP async
+httpx>=0.27.0
+
+# Bot de Telegram
+python-telegram-bot>=21.0
+
+# Config YAML
+pyyaml>=6.0
+
+# Base de datos (incluido en Python stdlib)
+# sqlite3 - no requiere instalacion

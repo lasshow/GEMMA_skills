@@ -1,0 +1,34 @@
+# GemmaBot - Configuracion
+# Copia este archivo como config.yaml y edita los valores
+
+# URL del servidor llama.cpp con Gemma 4
+gemma_url: "http://localhost:8080"
+
+# === TELEGRAM ===
+# Crea un bot con @BotFather y pega el token aqui
+telegram_token: "TU_TOKEN_AQUI"
+
+# IDs de usuarios autorizados (dejar vacio para permitir todos)
+# Para saber tu ID, envia /start al bot @userinfobot en Telegram
+telegram_allowed_users: []
+  # - 123456789
+  # - 987654321
+
+# === WHATSAPP (Baileys) ===
+# Numeros autorizados (sin +, sin espacios)
+whatsapp_allowed_numbers: []
+  # - "34666123456"
+  # - "52551234567"
+
+# === TASKER MCP ===
+# URL del servidor Tasker MCP (si esta instalado)
+tasker_url: "http://localhost:3000"
+
+# === NOTAS ===
+# Ruta de la base de datos SQLite
+notes_db: "gemmabot_notes.db"
+
+# === MODELO ===
+# Modelo a usar (para referencia del script de inicio)
+model: "gemma-4-e4b-it"
+# Alternativas: gemma-4-e2b-it (mas ligero), gemma-4-31b-it (mas potente)
