@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Lorem Ipsum</title></head>
+<body>
+<script>
+  const LATIN = [
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+    "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+    "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    "Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra.",
+    "Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat.",
+    "Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus.",
+    "Phasellus ultrices nulla quis nibh. Quisque a lectus. Donec consectetuer ligula vulputate sem tristique cursus."
+  ];
+
+  const SPANISH = [
+    "En un lugar de la mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivia un hidalgo de los de lanza en astillero.",
+    "La vida es sueno y los suenos, suenos son. Que toda la vida es sueno y los suenos, suenos son.",
+    "El desarrollo de aplicaciones modernas requiere una comprension profunda de las tecnologias disponibles y sus implicaciones.",
+    "La inteligencia artificial esta transformando la manera en que interactuamos con la tecnologia y el mundo que nos rodea.",
+    "Los datos son el nuevo petroleo de la economia digital. Quien controla los datos, controla el futuro de la innovacion.",
+    "La experiencia del usuario es fundamental para el exito de cualquier producto digital en el mercado actual.",
+    "La seguridad informatica no es un producto sino un proceso continuo de mejora y adaptacion ante nuevas amenazas.",
+    "La automatizacion de procesos permite a las empresas ser mas eficientes y dedicar recursos a tareas de mayor valor."
+  ];
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const type = jsonData.type || 'paragraphs';
+      const count = Math.min(parseInt(jsonData.count) || 3, 20);
+      const lang = jsonData.lang || 'latin';
+
+      const source = lang === 'es' ? SPANISH : LATIN;
+      let output = '';
+
+      if (type === 'paragraphs') {
+        for (let i = 0; i < count; i++) {
+          const sentences = [];
+          const numSentences = 2 + Math.floor(Math.random() * 3);
+          for (let j = 0; j < numSentences; j++) {
+            sentences.push(source[Math.floor(Math.random() * source.length)]);
+          }
+          output += sentences.join(' ') + '\n\n';
+        }
+      } else if (type === 'sentences') {
+        for (let i = 0; i < count; i++) {
+          output += source[Math.floor(Math.random() * source.length)] + '\n';
+        }
+      } else if (type === 'words') {
+        const allWords = source.join(' ').split(/\s+/);
+        const words = [];
+        for (let i = 0; i < count; i++) {
+          words.push(allWords[Math.floor(Math.random() * allWords.length)]);
+        }
+        output = words.join(' ') + '.';
+      }
+
+      return JSON.stringify({
+        result: `=== TEXTO GENERADO (${count} ${type}, ${lang === 'es' ? 'espanol' : 'latin'}) ===\n\n${output.trim()}`
+      });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

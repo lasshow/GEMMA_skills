@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Dice Random</title></head>
+<body>
+<script>
+  function getSecureRandom(max) {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return (arr[0] % max);
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const type = jsonData.type || 'dice';
+
+      if (type === 'dice') {
+        const sides = jsonData.sides || 6;
+        const count = Math.min(jsonData.count || 1, 20);
+        const rolls = [];
+        for (let i = 0; i < count; i++) {
+          rolls.push(getSecureRandom(sides) + 1);
+        }
+        const total = rolls.reduce((a, b) => a + b, 0);
+        let result = `=== DADOS (${count}d${sides}) ===\n\n`;
+        result += `Resultados: ${rolls.join(', ')}\n`;
+        if (count > 1) result += `Total: ${total}\n`;
+        if (sides === 20) {
+          if (rolls.includes(20)) result += `\nCRITICO! Tirada natural de 20!`;
+          if (rolls.includes(1)) result += `\nPIFIA! Has sacado un 1...`;
+        }
+        return JSON.stringify({ result });
+      }
+
+      if (type === 'coin') {
+        const count = Math.min(jsonData.count || 1, 10);
+        const flips = [];
+        for (let i = 0; i < count; i++) {
+          flips.push(getSecureRandom(2) === 0 ? 'Cara' : 'Cruz');
+        }
+        let result = `=== MONEDA ===\n\n`;
+        result += count === 1 ? `Resultado: ${flips[0]}` : `Resultados: ${flips.join(', ')}`;
+        return JSON.stringify({ result });
+      }
+
+      if (type === 'number') {
+        const min = jsonData.min || 1;
+        const max = jsonData.max || 100;
+        const num = getSecureRandom(max - min + 1) + min;
+        return JSON.stringify({ result: `=== NUMERO ALEATORIO ===\n\nRango: ${min} - ${max}\nResultado: ${num}` });
+      }
+
+      if (type === 'pick') {
+        const items = jsonData.items || [];
+        if (items.length === 0) return JSON.stringify({ error: 'No hay opciones para elegir.' });
+        const idx = getSecureRandom(items.length);
+        return JSON.stringify({ result: `=== ELECCION ALEATORIA ===\n\nOpciones: ${items.join(', ')}\n\nElegido: ${items[idx]}` });
+      }
+
+      if (type === 'shuffle') {
+        const items = [...(jsonData.items || [])];
+        if (items.length === 0) return JSON.stringify({ error: 'No hay elementos para mezclar.' });
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = getSecureRandom(i + 1);
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        let result = `=== LISTA MEZCLADA ===\n\n`;
+        items.forEach((item, i) => { result += `${i + 1}. ${item}\n`; });
+        return JSON.stringify({ result });
+      }
+
+      return JSON.stringify({ error: `Tipo desconocido: ${type}` });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

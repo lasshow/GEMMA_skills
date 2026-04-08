@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Regex Tester</title></head>
+<body>
+<script>
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const pattern = jsonData.pattern || '';
+      const text = jsonData.text || '';
+      const flags = jsonData.flags || 'g';
+
+      if (!pattern) return JSON.stringify({ error: 'No se proporciono patron regex.' });
+      if (!text) return JSON.stringify({ error: 'No se proporciono texto.' });
+
+      let regex;
+      try {
+        regex = new RegExp(pattern, flags);
+      } catch (e) {
+        return JSON.stringify({ error: `Regex invalida: ${e.message}` });
+      }
+
+      const matches = [];
+      let match;
+
+      if (flags.includes('g')) {
+        while ((match = regex.exec(text)) !== null) {
+          matches.push({
+            full: match[0],
+            index: match.index,
+            groups: match.slice(1)
+          });
+          if (matches.length > 50) break;
+        }
+      } else {
+        match = regex.exec(text);
+        if (match) {
+          matches.push({
+            full: match[0],
+            index: match.index,
+            groups: match.slice(1)
+          });
+        }
+      }
+
+      let result = `=== REGEX TEST ===\n\n`;
+      result += `Patron: /${pattern}/${flags}\n`;
+      result += `Texto: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}\n`;
+      result += `Coincidencias: ${matches.length}\n\n`;
+
+      if (matches.length === 0) {
+        result += `No se encontraron coincidencias.`;
+      } else {
+        matches.forEach((m, i) => {
+          result += `[${i + 1}] "${m.full}" (posicion ${m.index})\n`;
+          if (m.groups.length > 0) {
+            m.groups.forEach((g, gi) => {
+              result += `    Grupo ${gi + 1}: "${g || '(vacio)'}"\n`;
+            });
+          }
+        });
+      }
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

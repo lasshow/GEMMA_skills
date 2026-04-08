@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Pomodoro</title></head>
+<body>
+<script>
+  const STORAGE_KEY = 'gemma_pomodoro';
+
+  function getState() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch { return {}; }
+  }
+
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const action = jsonData.action || 'status';
+      let state = getState();
+
+      if (!state.sessions) state.sessions = [];
+      if (!state.config) state.config = { work: 25, break: 5 };
+
+      const now = Date.now();
+      const today = new Date().toLocaleDateString('es-ES');
+
+      if (action === 'config') {
+        state.config.work = jsonData.work_minutes || 25;
+        state.config.break = jsonData.break_minutes || 5;
+        saveState(state);
+        return JSON.stringify({
+          result: `Configuracion actualizada:\n- Trabajo: ${state.config.work} min\n- Descanso: ${state.config.break} min`
+        });
+      }
+
+      if (action === 'start') {
+        const task = jsonData.task || 'Sin nombre';
+        state.current = {
+          task,
+          started: now,
+          duration: state.config.work * 60 * 1000,
+          type: 'work'
+        };
+        saveState(state);
+
+        return JSON.stringify({
+          result: `=== POMODORO INICIADO ===\n\nTarea: ${task}\nDuracion: ${state.config.work} minutos\nInicio: ${new Date(now).toLocaleTimeString('es-ES')}\nFin estimado: ${new Date(now + state.config.work * 60000).toLocaleTimeString('es-ES')}\n\nConcentrate! No mires el telefono hasta que termine.`
+        });
+      }
+
+      if (action === 'status') {
+        if (!state.current) {
+          const todaySessions = state.sessions.filter(s => s.date === today);
+          return JSON.stringify({
+            result: `No hay pomodoro activo.\nSesiones hoy: ${todaySessions.length}\n\nDi "iniciar pomodoro" para empezar.`
+          });
+        }
+
+        const elapsed = now - state.current.started;
+        const remaining = state.current.duration - elapsed;
+
+        if (remaining <= 0) {
+          // Sesion completada
+          state.sessions.push({
+            task: state.current.task,
+            date: today,
+            duration: state.config.work,
+            completed: new Date(now).toLocaleTimeString('es-ES')
+          });
+          const completedTask = state.current.task;
+          state.current = null;
+          saveState(state);
+
+          const todaySessions = state.sessions.filter(s => s.date === today);
+          return JSON.stringify({
+            result: `=== POMODORO COMPLETADO! ===\n\nTarea: ${completedTask}\nSesiones hoy: ${todaySessions.length}\n\nDescansa ${state.config.break} minutos. Te lo mereces!`
+          });
+        }
+
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        return JSON.stringify({
+          result: `=== POMODORO EN CURSO ===\n\nTarea: ${state.current.task}\nTiempo restante: ${mins}:${String(secs).padStart(2, '0')}\nTipo: ${state.current.type === 'work' ? 'Trabajo' : 'Descanso'}`
+        });
+      }
+
+      if (action === 'history') {
+        const todaySessions = state.sessions.filter(s => s.date === today);
+        if (todaySessions.length === 0) {
+          return JSON.stringify({ result: 'No hay sesiones hoy. Empieza tu primer pomodoro!' });
+        }
+        let result = `=== HISTORIAL HOY (${todaySessions.length} sesiones) ===\n\n`;
+        todaySessions.forEach((s, i) => {
+          result += `[${i + 1}] ${s.task} - ${s.duration} min (${s.completed})\n`;
+        });
+        const totalMins = todaySessions.reduce((sum, s) => sum + s.duration, 0);
+        result += `\nTotal: ${totalMins} minutos de trabajo enfocado.`;
+        return JSON.stringify({ result });
+      }
+
+      return JSON.stringify({ error: `Accion desconocida: ${action}` });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

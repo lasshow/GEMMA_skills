@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Timezone Converter</title></head>
+<body>
+<script>
+  function getTimeInZone(zone) {
+    try {
+      return new Date().toLocaleString('es-ES', {
+        timeZone: zone,
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      });
+    } catch { return null; }
+  }
+
+  function getDateInZone(zone) {
+    try {
+      return new Date().toLocaleDateString('es-ES', {
+        timeZone: zone,
+        weekday: 'short', day: 'numeric', month: 'short'
+      });
+    } catch { return null; }
+  }
+
+  function convertTime(timeStr, fromZone, toZone) {
+    try {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const fromDate = new Date(`${dateStr}T${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:00`);
+
+      const fromOffset = getOffsetMinutes(fromZone);
+      const toOffset = getOffsetMinutes(toZone);
+      const diff = toOffset - fromOffset;
+
+      const converted = new Date(fromDate.getTime() + diff * 60000);
+      return converted.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+    } catch { return null; }
+  }
+
+  function getOffsetMinutes(zone) {
+    const now = new Date();
+    const utc = now.toLocaleString('en-US', { timeZone: 'UTC' });
+    const local = now.toLocaleString('en-US', { timeZone: zone });
+    return (new Date(local) - new Date(utc)) / 60000;
+  }
+
+  const ZONE_NAMES = {
+    'Europe/Madrid': 'Madrid',
+    'Europe/London': 'Londres',
+    'America/New_York': 'Nueva York',
+    'America/Los_Angeles': 'Los Angeles',
+    'America/Mexico_City': 'Ciudad de Mexico',
+    'America/Bogota': 'Bogota',
+    'America/Buenos_Aires': 'Buenos Aires',
+    'America/Santiago': 'Santiago',
+    'America/Lima': 'Lima',
+    'Asia/Tokyo': 'Tokio',
+    'Asia/Shanghai': 'Shanghai',
+    'Asia/Dubai': 'Dubai',
+    'Asia/Kolkata': 'India',
+    'Australia/Sydney': 'Sidney',
+    'Pacific/Auckland': 'Auckland',
+  };
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const action = jsonData.action || 'now';
+
+      if (action === 'now') {
+        const zone = jsonData.to_zone || 'Europe/Madrid';
+        const time = getTimeInZone(zone);
+        const date = getDateInZone(zone);
+        const name = ZONE_NAMES[zone] || zone;
+        if (!time) return JSON.stringify({ error: `Zona horaria no valida: ${zone}` });
+        return JSON.stringify({
+          result: `=== HORA ACTUAL ===\n\n${name}: ${time}\n${date}`
+        });
+      }
+
+      if (action === 'convert') {
+        const time = jsonData.time || '12:00';
+        const from = jsonData.from_zone || 'Europe/Madrid';
+        const to = jsonData.to_zone || 'America/New_York';
+        const converted = convertTime(time, from, to);
+        if (!converted) return JSON.stringify({ error: 'Error en la conversion.' });
+        return JSON.stringify({
+          result: `=== CONVERSION HORARIA ===\n\n${time} en ${ZONE_NAMES[from] || from}\n= ${converted} en ${ZONE_NAMES[to] || to}`
+        });
+      }
+
+      if (action === 'meeting') {
+        const zones = jsonData.zones || ['Europe/Madrid', 'America/New_York', 'Asia/Tokyo'];
+        let result = `=== HORA EN VARIAS ZONAS ===\n\n`;
+        for (const zone of zones) {
+          const time = getTimeInZone(zone);
+          const date = getDateInZone(zone);
+          const name = ZONE_NAMES[zone] || zone;
+          result += `${name}: ${time} (${date})\n`;
+        }
+        return JSON.stringify({ result });
+      }
+
+      return JSON.stringify({ error: `Accion desconocida: ${action}` });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Color Picker</title></head>
+<body>
+<script>
+  function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    return {
+      r: parseInt(hex.substring(0, 2), 16),
+      g: parseInt(hex.substring(2, 4), 16),
+      b: parseInt(hex.substring(4, 6), 16)
+    };
+  }
+
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+  }
+
+  function hslToRgb(h, s, l) {
+    h /= 360; s /= 100; l /= 100;
+    let r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1; if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+  }
+
+  function parseColor(color) {
+    color = color.trim();
+    if (color.startsWith('#')) return hexToRgb(color);
+    const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) return { r: +rgbMatch[1], g: +rgbMatch[2], b: +rgbMatch[3] };
+    const hslMatch = color.match(/hsl\((\d+),\s*(\d+)%?,\s*(\d+)%?\)/);
+    if (hslMatch) return hslToRgb(+hslMatch[1], +hslMatch[2], +hslMatch[3]);
+    return null;
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const action = jsonData.action || 'convert';
+
+      if (action === 'random') {
+        const count = Math.min(jsonData.count || 5, 10);
+        let result = `=== COLORES ALEATORIOS ===\n\n`;
+        for (let i = 0; i < count; i++) {
+          const r = Math.floor(Math.random() * 256);
+          const g = Math.floor(Math.random() * 256);
+          const b = Math.floor(Math.random() * 256);
+          const hex = rgbToHex(r, g, b);
+          result += `${hex} | rgb(${r},${g},${b})\n`;
+        }
+        return JSON.stringify({ result });
+      }
+
+      const color = jsonData.color || '';
+      if (!color) return JSON.stringify({ error: 'No se proporciono color.' });
+
+      const rgb = parseColor(color);
+      if (!rgb) return JSON.stringify({ error: `No se pudo parsear el color: ${color}` });
+
+      const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+      const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+      if (action === 'convert') {
+        let result = `=== COLOR ===\n\n`;
+        result += `HEX: ${hex}\n`;
+        result += `RGB: rgb(${rgb.r}, ${rgb.g}, ${rgb.b})\n`;
+        result += `HSL: hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)\n`;
+        return JSON.stringify({ result });
+      }
+
+      if (action === 'palette') {
+        let result = `=== PALETA DE COLORES ===\n\nColor base: ${hex}\n\n`;
+        const complements = [
+          { name: 'Complementario', h: (hsl.h + 180) % 360 },
+          { name: 'Analogo 1', h: (hsl.h + 30) % 360 },
+          { name: 'Analogo 2', h: (hsl.h - 30 + 360) % 360 },
+          { name: 'Triadico 1', h: (hsl.h + 120) % 360 },
+          { name: 'Triadico 2', h: (hsl.h + 240) % 360 },
+        ];
+        for (const c of complements) {
+          const cRgb = hslToRgb(c.h, hsl.s, hsl.l);
+          result += `${c.name}: ${rgbToHex(cRgb.r, cRgb.g, cRgb.b)}\n`;
+        }
+        return JSON.stringify({ result });
+      }
+
+      return JSON.stringify({ error: `Accion desconocida: ${action}` });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

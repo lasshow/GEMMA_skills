@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Conversor Divisas</title></head>
+<body>
+<script>
+  /**
+   * Usa la API de exchangerate.host (CORS nativo, sin API key necesaria)
+   * Alternativa: frankfurter.app (tambien CORS nativo)
+   */
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const amount = parseFloat(jsonData.amount) || 1;
+      const from = (jsonData.from || 'EUR').toUpperCase();
+      const to = (jsonData.to || 'USD').toUpperCase();
+
+      // Intentar con frankfurter.app (Banco Central Europeo)
+      const url = `https://api.frankfurter.app/latest?amount=${amount}&from=${from}&to=${to}`;
+      const resp = await fetch(url);
+
+      if (!resp.ok) {
+        return JSON.stringify({ error: `Error: moneda no soportada (${from} -> ${to})` });
+      }
+
+      const result_data = await resp.json();
+      const converted = result_data.rates[to];
+
+      if (!converted) {
+        return JSON.stringify({ error: `No se encontro tipo de cambio para ${to}` });
+      }
+
+      const rate = converted / amount;
+      const date = result_data.date;
+
+      const NAMES = {
+        EUR: 'Euro', USD: 'Dolar USA', GBP: 'Libra esterlina',
+        MXN: 'Peso mexicano', ARS: 'Peso argentino', COP: 'Peso colombiano',
+        CLP: 'Peso chileno', BRL: 'Real brasileno', JPY: 'Yen japones',
+        CNY: 'Yuan chino', CHF: 'Franco suizo', CAD: 'Dolar canadiense',
+        AUD: 'Dolar australiano', SEK: 'Corona sueca', NOK: 'Corona noruega',
+      };
+
+      let result = `=== CONVERSION DE DIVISAS ===\n\n`;
+      result += `${amount} ${from} (${NAMES[from] || from}) = ${converted.toFixed(2)} ${to} (${NAMES[to] || to})\n\n`;
+      result += `Tipo de cambio: 1 ${from} = ${rate.toFixed(4)} ${to}\n`;
+      result += `Fecha: ${date}\n`;
+      result += `Fuente: Banco Central Europeo`;
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Base64 Tools</title></head>
+<body>
+<script>
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const action = jsonData.action || 'base64_encode';
+      const text = jsonData.text || '';
+
+      if (!text.trim()) return JSON.stringify({ error: 'No se proporciono texto.' });
+
+      let result = '';
+      let label = '';
+
+      switch (action) {
+        case 'base64_encode':
+          result = btoa(unescape(encodeURIComponent(text)));
+          label = 'Base64 Encode';
+          break;
+        case 'base64_decode':
+          result = decodeURIComponent(escape(atob(text)));
+          label = 'Base64 Decode';
+          break;
+        case 'url_encode':
+          result = encodeURIComponent(text);
+          label = 'URL Encode';
+          break;
+        case 'url_decode':
+          result = decodeURIComponent(text);
+          label = 'URL Decode';
+          break;
+        case 'html_encode':
+          result = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+          label = 'HTML Encode';
+          break;
+        case 'html_decode':
+          const el = document.createElement('textarea');
+          el.innerHTML = text;
+          result = el.value;
+          label = 'HTML Decode';
+          break;
+        default:
+          return JSON.stringify({ error: `Accion desconocida: ${action}` });
+      }
+
+      return JSON.stringify({
+        result: `=== ${label.toUpperCase()} ===\n\nOriginal:\n${text}\n\nResultado:\n${result}`
+      });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

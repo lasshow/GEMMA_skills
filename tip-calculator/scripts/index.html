@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Tip Calculator</title></head>
+<body>
+<script>
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const total = parseFloat(jsonData.total) || 0;
+      const tipPercent = parseFloat(jsonData.tip_percent) || 10;
+      const people = parseInt(jsonData.people) || 1;
+      const currency = jsonData.currency || 'EUR';
+
+      if (total <= 0) return JSON.stringify({ error: 'El total debe ser mayor que 0.' });
+
+      const tipAmount = total * (tipPercent / 100);
+      const grandTotal = total + tipAmount;
+      const perPerson = grandTotal / people;
+      const tipPerPerson = tipAmount / people;
+
+      const sym = { EUR: '\u20ac', USD: '$', GBP: '\u00a3', MXN: '$MXN ' }[currency] || currency + ' ';
+
+      let result = `=== CUENTA ===\n\n`;
+      result += `Subtotal: ${sym}${total.toFixed(2)}\n`;
+      result += `Propina (${tipPercent}%): ${sym}${tipAmount.toFixed(2)}\n`;
+      result += `Total: ${sym}${grandTotal.toFixed(2)}\n`;
+
+      if (people > 1) {
+        result += `\n=== DIVISION (${people} personas) ===\n\n`;
+        result += `Por persona: ${sym}${perPerson.toFixed(2)}\n`;
+        result += `(${sym}${(total / people).toFixed(2)} comida + ${sym}${tipPerPerson.toFixed(2)} propina)`;
+      }
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

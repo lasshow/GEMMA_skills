@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>Hash Generator</title></head>
+<body>
+<script>
+  async function generateHash(text, algorithm) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest(algorithm, data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const text = jsonData.text || '';
+      const algorithm = jsonData.algorithm || 'SHA-256';
+
+      if (!text.trim()) return JSON.stringify({ error: 'No se proporciono texto.' });
+
+      const validAlgos = ['SHA-1', 'SHA-256', 'SHA-512'];
+      if (!validAlgos.includes(algorithm)) {
+        return JSON.stringify({ error: `Algoritmo no soportado. Usa: ${validAlgos.join(', ')}` });
+      }
+
+      const hash = await generateHash(text, algorithm);
+
+      let result = `=== HASH ${algorithm} ===\n\n`;
+      result += `Texto: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}\n`;
+      result += `Algoritmo: ${algorithm}\n`;
+      result += `Hash: ${hash}\n`;
+      result += `Longitud: ${hash.length} caracteres`;
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

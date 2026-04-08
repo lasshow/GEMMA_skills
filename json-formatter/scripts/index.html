@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>JSON Formatter</title></head>
+<body>
+<script>
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      const action = jsonData.action || 'format';
+      const jsonText = jsonData.json_text || '';
+
+      if (!jsonText.trim()) return JSON.stringify({ error: 'No se proporciono JSON.' });
+
+      if (action === 'validate') {
+        try {
+          JSON.parse(jsonText);
+          const obj = JSON.parse(jsonText);
+          const keys = typeof obj === 'object' && obj !== null ? Object.keys(obj).length : 0;
+          const isArray = Array.isArray(obj);
+          return JSON.stringify({
+            result: `=== JSON VALIDO ===\n\nTipo: ${isArray ? 'Array' : 'Objeto'}\n${isArray ? 'Elementos' : 'Claves'}: ${isArray ? obj.length : keys}\nTamano: ${jsonText.length} caracteres`
+          });
+        } catch (e) {
+          return JSON.stringify({
+            result: `=== JSON INVALIDO ===\n\nError: ${e.message}`
+          });
+        }
+      }
+
+      if (action === 'format') {
+        const parsed = JSON.parse(jsonText);
+        const formatted = JSON.stringify(parsed, null, 2);
+        return JSON.stringify({
+          result: `=== JSON FORMATEADO ===\n\n${formatted}`
+        });
+      }
+
+      if (action === 'minify') {
+        const parsed = JSON.parse(jsonText);
+        const minified = JSON.stringify(parsed);
+        return JSON.stringify({
+          result: `=== JSON MINIFICADO ===\n\n${minified}\n\nOriginal: ${jsonText.length} chars -> Minificado: ${minified.length} chars (${Math.round((1 - minified.length / jsonText.length) * 100)}% reduccion)`
+        });
+      }
+
+      return JSON.stringify({ error: `Accion desconocida: ${action}` });
+    } catch (e) {
+      return JSON.stringify({ error: `Error parseando JSON: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>QR Generator</title></head>
+<body>
+<script>
+  /**
+   * Genera QR usando la API de goqr.me (CORS nativo).
+   * Devuelve URL de imagen del QR.
+   */
+  window['ai_edge_gallery_get_result'] = async (data) => {
+    try {
+      const jsonData = JSON.parse(data);
+      let text = jsonData.text || '';
+      const type = jsonData.type || 'text';
+
+      // Formatear segun tipo
+      if (type === 'wifi') {
+        const parts = text.split('|');
+        if (parts.length >= 2) {
+          const ssid = parts[0];
+          const pass = parts[1];
+          const enc = parts[2] || 'WPA';
+          text = `WIFI:T:${enc};S:${ssid};P:${pass};;`;
+        }
+      } else if (type === 'contact') {
+        const parts = text.split('|');
+        if (parts.length >= 2) {
+          const name = parts[0];
+          const tel = parts[1];
+          const email = parts[2] || '';
+          text = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL:${tel}\n${email ? 'EMAIL:' + email + '\n' : ''}END:VCARD`;
+        }
+      }
+
+      if (!text.trim()) {
+        return JSON.stringify({ error: 'No se proporciono texto para el QR.' });
+      }
+
+      // Generar QR via API
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}&format=svg`;
+
+      // Verificar que funciona
+      const resp = await fetch(qrUrl, { method: 'HEAD' });
+      if (!resp.ok) {
+        return JSON.stringify({ error: 'Error generando QR' });
+      }
+
+      let result = `=== CODIGO QR GENERADO ===\n\n`;
+      result += `Contenido: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}\n`;
+      result += `Tipo: ${type}\n\n`;
+      result += `Enlace al QR:\n${qrUrl}\n\n`;
+      result += `Para ver/descargar el QR, abre el enlace en tu navegador.`;
+
+      return JSON.stringify({ result });
+    } catch (e) {
+      return JSON.stringify({ error: `Error: ${e.message}` });
+    }
+  };
+</script>
+</body>
+</html>
