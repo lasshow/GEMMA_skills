@@ -1,23 +1,29 @@
 ---
 name: noticias
-description: Muestra las noticias mas recientes de Google News. Busca noticias por tema o muestra las principales del dia. Triggers - noticias, news, que paso hoy, ultimas noticias, actualidad, noticias de, titulares.
+description: SOLO para titulares de prensa RSS de Google News. Usa UNICAMENTE cuando el usuario diga exactamente la palabra "noticias" o "titulares". NO usar para busquedas generales de informacion.
 ---
 
-# Noticias en tiempo real
+# Titulares de Google News RSS
 
 ## Instrucciones
 
-Cuando el usuario quiera ver noticias actuales o buscar noticias sobre un tema:
+IMPORTANTE: Este skill es SOLO para obtener titulares de noticias de Google News.
+NO lo uses para buscar informacion general - para eso existe buscar-web.
 
-### Como buscar noticias
+Solo activa este skill cuando el usuario diga EXACTAMENTE:
+- "dame las noticias"
+- "titulares de hoy"
+- "noticias de [tema]"
+
+### Como obtener titulares
 Llama la herramienta `run_js` con los siguientes parametros exactos:
 - data: Un string JSON con los campos:
-  - topic: String. Tema de las noticias. Usa "" (vacio) para noticias generales del dia.
+  - topic: String. Tema de las noticias. Usa "" (vacio) para noticias generales.
   - lang: String. "es" para espanol, "en" para ingles.
-  - country: String. "ES" para Espana, "MX" para Mexico, "AR" para Argentina, "US" para EEUU.
+  - country: String. "ES" para Espana, "MX" para Mexico, "AR" para Argentina.
 
 ### Presentar resultados
-- Muestra las noticias como lista con titulo, fuente y enlace
-- Si el usuario pregunta sobre un tema concreto, destaca las noticias mas relevantes
+- Muestra los titulares como lista numerada con fuente y enlace
 - SIEMPRE responde en espanol
-- Indica la fecha/hora de publicacion si esta disponible
+- Indica la fecha si esta disponible
+- NO llames a buscar-web despues de este skill. Los titulares son suficientes.
